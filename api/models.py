@@ -1,6 +1,6 @@
 from sqlalchemy import Column, String, Text, TIMESTAMP, ForeignKey
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import declarative_base
+from sqlalchemy.orm import declarative_base, relationship
 
 
 Base = declarative_base()
@@ -43,6 +43,7 @@ class Ticket(Base):
         ForeignKey("agents.id"),
         nullable=True
     )
+    customer = relationship("Customer")
 
     subject = Column(String, nullable=False)
     message = Column(Text, nullable=False)

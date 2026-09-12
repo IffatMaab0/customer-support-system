@@ -87,6 +87,55 @@ def ticket_stats(db: Session = Depends(get_db)):
 
     return counts
 
+@app.get("/tickets/available", response_model=list[schemas.TicketOut])
+def available_tickets(db: Session = Depends(get_db)):
+    return (
+        db.query(models.Ticket)
+        .filter(
+            models.Ticket.status == "open",
+            models.Ticket.agent_id.is_(None)
+        )
+        .order_by(models.Ticket.created_at.desc())
+        .all()
+    )
+
+@app.patch(
+    "/tickets/{ticket_id}/claim",
+    response_model=schemas.TicketOut
+)
+def claim_ticket(
+    ticket_id: uuid.UUID,
+    claim: schemas.ClaimTicket,
+    db: Session = Depends(get_db)
+):
+    ticket = db.query(models.Ticket).filter_by(id=ticket_id).first()
+
+    if not ticket:
+        raise HTTPException(
+            status_code=404,
+            detail="Ticket not found"
+        )
+
+    ticket.agent_id = claim.agent_id
+    ticket.updated_at = func.now()
+
+    db.commit()
+    db.refresh(ticket)
+
+    return ticket
+
+@app.get("/tickets/my", response_model=list[schemas.TicketOut])
+def my_tickets(
+    agent_id: uuid.UUID,
+    db: Session = Depends(get_db)
+):
+    return (
+        db.query(models.Ticket)
+        .filter(models.Ticket.agent_id == agent_id)
+        .order_by(models.Ticket.created_at.desc())
+        .all()
+    )
+
 @app.get("/tickets/{ticket_id}", response_model=schemas.TicketOut)
 def get_ticket(
     ticket_id: uuid.UUID,
@@ -143,4 +192,8 @@ def add_response(
 @app.get("/knowledge-base", response_model=list[schemas.DocOut])
 def list_docs(db: Session = Depends(get_db)):
     return db.query(models.Doc).all()
+
+@app.get("/agents", response_model=list[schemas.AgentOut])
+def list_agents(db: Session = Depends(get_db)):
+    return db.query(models.Agent).order_by(models.Agent.name).all()
 

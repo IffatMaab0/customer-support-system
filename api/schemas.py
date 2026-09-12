@@ -2,15 +2,22 @@ import uuid
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 
 
 class TicketCreate(BaseModel):
     subject: str
     message: str
     customer_name: str
-    customer_email: str
+    customer_email: EmailStr
 
+class CustomerOut(BaseModel):
+    id: uuid.UUID
+    name: str
+    email: EmailStr
+
+    class Config:
+        from_attributes = True
 
 class TicketOut(BaseModel):
     id: uuid.UUID
@@ -21,6 +28,7 @@ class TicketOut(BaseModel):
     responded_at: Optional[datetime] = None
     created_at: datetime
     updated_at: datetime
+    customer: CustomerOut
 
     class Config:
         from_attributes = True
@@ -42,3 +50,14 @@ class DocOut(BaseModel):
 
     class Config:
         from_attributes = True
+
+class ClaimTicket(BaseModel):
+    agent_id: uuid.UUID    
+
+class AgentOut(BaseModel):
+    id: uuid.UUID
+    name: str
+    email: str
+
+    class Config:
+        from_attributes = True         
