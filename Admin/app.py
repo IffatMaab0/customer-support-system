@@ -55,6 +55,9 @@ if "agent_name" not in st.session_state:
     st.session_state.agent_name = None
 
 
+# -------------------------
+# Login
+# -------------------------
 
 if not st.session_state.access_token:
 
@@ -122,6 +125,9 @@ if not st.session_state.access_token:
     st.stop()
 
 
+# -------------------------
+# Header
+# -------------------------
 
 col1, col2 = st.columns([3, 1])
 
@@ -141,6 +147,9 @@ with col2:
 headers = auth_headers()
 
 
+# -------------------------
+# Statistics
+# -------------------------
 
 stats_response = requests.get(
     f"{API_URL}/admin/stats",
@@ -202,6 +211,9 @@ else:
         st.error("Could not load admin statistics.")
 
 
+# -------------------------
+# Agents
+# -------------------------
 
 st.divider()
 
@@ -233,9 +245,11 @@ else:
     st.error("Could not load agents.")
 
 
+# -------------------------
+# Tickets
+# -------------------------
 
 st.divider()
-
 st.header("All Tickets")
 
 tickets_response = requests.get(
@@ -244,39 +258,27 @@ tickets_response = requests.get(
 )
 
 if tickets_response.status_code == 200:
-
     tickets = tickets_response.json()
 
     if not tickets:
-
         st.info("No tickets found.")
 
     for ticket in tickets:
-
         with st.expander(ticket["subject"]):
+            st.write(f"**Status:** {ticket['status']}")
+            st.write(f"**Customer:** {ticket['customer_name']}")
+            st.write(f"**Email:** {ticket['customer_email']}")
+            st.write(f"**Message:** {ticket['message']}")
 
-            st.write(
-                f"**Status:** {ticket['status']}"
-            )
+            if ticket["agent_name"]:
+                st.write(f"**Assigned Agent:** {ticket['agent_name']}")
+            else:
+                st.write("**Assigned Agent:** Unassigned")
 
-            st.write(
-                f"**Customer:** "
-                f"{ticket['customer']['name']}"
-            )
+            if ticket["response"]:
+                st.write(f"**Agent Response:** {ticket['response']}")
 
-            st.write(
-                f"**Email:** "
-                f"{ticket['customer']['email']}"
-            )
-
-            st.write(
-                f"**Message:** {ticket['message']}"
-            )
-
-            st.caption(
-                f"Created: {ticket['created_at']}"
-            )
+            st.caption(f"Created: {ticket['created_at']}")
 
 else:
-
     st.error("Could not load tickets.")

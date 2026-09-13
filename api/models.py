@@ -46,6 +46,7 @@ class Ticket(Base):
         nullable=True
     )
     customer = relationship("Customer")
+    agent = relationship("Agent")
 
     subject = Column(String, nullable=False)
     message = Column(Text, nullable=False)

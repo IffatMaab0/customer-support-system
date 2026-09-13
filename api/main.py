@@ -9,7 +9,8 @@ from sqlalchemy.orm import Session
 from security import (
     verify_password,
     create_access_token,
-    get_current_agent
+    get_current_agent,
+    get_current_admin
 )
 
 import models
@@ -99,7 +100,8 @@ def login(
         )
 
     access_token = create_access_token(
-        str(agent.id)
+    str(agent.id),
+    agent.role
     )
 
     return {
@@ -107,8 +109,9 @@ def login(
         "token_type": "bearer",
         "agent_id": str(agent.id),
         "name": agent.name,
-        "email": agent.email
-    }
+        "email": agent.email,
+        "role": agent.role
+}
 
 
 
@@ -379,16 +382,31 @@ def admin_agents(
     )
 
 
-@app.get("/admin/tickets")
+@app.get("/admin/tickets", response_model=list[schemas.AdminTicketOut])
 def admin_tickets(
     current_admin: models.Agent = Depends(get_current_admin),
     db: Session = Depends(get_db)
 ):
-    return (
+    tickets = (
         db.query(models.Ticket)
         .order_by(models.Ticket.created_at.desc())
         .all()
     )
+
+    return [
+        {
+            "id": ticket.id,
+            "subject": ticket.subject,
+            "message": ticket.message,
+            "status": ticket.status,
+            "response": ticket.response,
+            "created_at": ticket.created_at,
+            "customer_name": ticket.customer.name,
+            "customer_email": ticket.customer.email,
+            "agent_name": ticket.agent.name if ticket.agent else None
+        }
+        for ticket in tickets
+    ]
 
 
 @app.get("/admin/stats")

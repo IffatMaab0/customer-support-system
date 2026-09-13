@@ -1,6 +1,7 @@
-import uuid
+from uuid import UUID
 from datetime import datetime
 from typing import Optional
+import uuid
 
 from pydantic import BaseModel, EmailStr
 
@@ -65,4 +66,19 @@ class AgentOut(BaseModel):
 
 class AgentLogin(BaseModel):
     email: EmailStr
-    password: str        
+    password: str  
+
+
+class AdminTicketOut(BaseModel):
+    id: UUID
+    subject: str
+    message: str
+    status: str
+    response: str | None
+    created_at: datetime
+    customer_name: str
+    customer_email: str
+    agent_name: str | None
+
+    class Config:
+        from_attributes = True          
