@@ -367,4 +367,68 @@ def list_agents(
         .all()
     )
 
+@app.get("/admin/agents")
+def admin_agents(
+    current_admin: models.Agent = Depends(get_current_admin),
+    db: Session = Depends(get_db)
+):
+    return (
+        db.query(models.Agent)
+        .order_by(models.Agent.name)
+        .all()
+    )
 
+
+@app.get("/admin/tickets")
+def admin_tickets(
+    current_admin: models.Agent = Depends(get_current_admin),
+    db: Session = Depends(get_db)
+):
+    return (
+        db.query(models.Ticket)
+        .order_by(models.Ticket.created_at.desc())
+        .all()
+    )
+
+
+@app.get("/admin/stats")
+def admin_stats(
+    current_admin: models.Agent = Depends(get_current_admin),
+    db: Session = Depends(get_db)
+):
+    total_tickets = db.query(models.Ticket).count()
+
+    open_tickets = (
+        db.query(models.Ticket)
+        .filter(models.Ticket.status == "open")
+        .count()
+    )
+
+    pending_tickets = (
+        db.query(models.Ticket)
+        .filter(models.Ticket.status == "pending")
+        .count()
+    )
+
+    resolved_tickets = (
+        db.query(models.Ticket)
+        .filter(models.Ticket.status == "resolved")
+        .count()
+    )
+
+    escalated_tickets = (
+        db.query(models.Ticket)
+        .filter(models.Ticket.status == "escalated")
+        .count()
+    )
+
+    total_agents = db.query(models.Agent).count()
+
+    return {
+        "total_tickets": total_tickets,
+        "open": open_tickets,
+        "pending": pending_tickets,
+        "resolved": resolved_tickets,
+        "escalated": escalated_tickets,
+        "total_agents": total_agents
+    }
