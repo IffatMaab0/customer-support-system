@@ -61,3 +61,8 @@ class AgentOut(BaseModel):
 
     class Config:
         from_attributes = True         
+
+
+class AgentLogin(BaseModel):
+    email: EmailStr
+    password: str        

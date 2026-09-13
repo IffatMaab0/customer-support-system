@@ -25,6 +25,7 @@ class Agent(Base):
     id = Column(UUID(as_uuid=True), primary_key=True)
     name = Column(String, nullable=False)
     email = Column(String, unique=True, nullable=False)
+    password_hash = Column(String, nullable=False)
 
 
 class Ticket(Base):
