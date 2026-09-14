@@ -1,16 +1,27 @@
 from uuid import UUID
 from datetime import datetime
-from typing import Optional
 import uuid
 
 from pydantic import BaseModel, EmailStr
 
 
+
 class TicketCreate(BaseModel):
     subject: str
     message: str
-    customer_name: str
-    customer_email: EmailStr
+
+
+class TicketListOut(BaseModel):
+    id: uuid.UUID
+    subject: str
+    status: str
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
 
 class CustomerOut(BaseModel):
     id: uuid.UUID
@@ -20,19 +31,6 @@ class CustomerOut(BaseModel):
     class Config:
         from_attributes = True
 
-class TicketOut(BaseModel):
-    id: uuid.UUID
-    subject: str
-    message: str
-    status: str
-    response: Optional[str] = None
-    responded_at: Optional[datetime] = None
-    created_at: datetime
-    updated_at: datetime
-    customer: CustomerOut
-
-    class Config:
-        from_attributes = True
 
 
 class StatusUpdate(BaseModel):
@@ -41,6 +39,8 @@ class StatusUpdate(BaseModel):
 
 class ResponseUpdate(BaseModel):
     response: str
+
+
 
 
 class DocOut(BaseModel):
@@ -52,8 +52,12 @@ class DocOut(BaseModel):
     class Config:
         from_attributes = True
 
+
+
+
 class ClaimTicket(BaseModel):
-    agent_id: uuid.UUID    
+    agent_id: uuid.UUID
+
 
 class AgentOut(BaseModel):
     id: uuid.UUID
@@ -61,12 +65,30 @@ class AgentOut(BaseModel):
     email: str
 
     class Config:
-        from_attributes = True         
+        from_attributes = True
 
 
-class AgentLogin(BaseModel):
+
+
+class LoginRequest(BaseModel):
     email: EmailStr
-    password: str  
+    password: str
+
+
+class AuthResponse(BaseModel):
+    access_token: str
+    token_type: str
+    role: str
+    name: str
+    email: EmailStr
+
+
+class MeResponse(BaseModel):
+    id: UUID
+    name: str
+    email: EmailStr
+    role: str
+
 
 
 class AdminTicketOut(BaseModel):
@@ -81,4 +103,7 @@ class AdminTicketOut(BaseModel):
     agent_name: str | None
 
     class Config:
-        from_attributes = True          
+        from_attributes = True        
+
+
+

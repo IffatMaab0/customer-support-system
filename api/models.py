@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Text, TIMESTAMP, ForeignKey
+from sqlalchemy import Column, String, Text, TIMESTAMP, ForeignKey, Boolean
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import declarative_base, relationship
 
@@ -12,7 +12,8 @@ class Customer(Base):
     id = Column(UUID(as_uuid=True), primary_key=True)
     name = Column(String, nullable=False)
     email = Column(String, unique=True, nullable=False)
-    
+    password_hash = Column(String, nullable=False)
+    is_active = Column(Boolean, nullable=False, default=True)
     created_at = Column(
         TIMESTAMP(timezone=True),
         server_default="now()"
@@ -40,19 +41,32 @@ class Ticket(Base):
         nullable=False
     )
 
-    agent_id = Column(
+    assigned_agent_id = Column(
         UUID(as_uuid=True),
         ForeignKey("agents.id"),
         nullable=True
     )
-    customer = relationship("Customer")
-    agent = relationship("Agent")
 
-    subject = Column(String, nullable=False)
-    message = Column(Text, nullable=False)
-    status = Column(String, nullable=False)
-    response = Column(Text, nullable=True)
-    responded_at = Column(TIMESTAMP(timezone=True), nullable=True)
+    subject = Column(String(160), nullable=False)
+    original_message = Column(Text, nullable=False)
+
+    status = Column(
+        String,
+        nullable=False,
+        default="open"
+    )
+
+    priority = Column(
+        String,
+        nullable=False,
+        default="normal"
+    )
+
+    channel = Column(
+        String,
+        nullable=False,
+        default="web_form"
+    )
 
     created_at = Column(
         TIMESTAMP(timezone=True),
@@ -63,6 +77,9 @@ class Ticket(Base):
         TIMESTAMP(timezone=True),
         server_default="now()"
     )
+
+    customer = relationship("Customer")
+    assigned_agent = relationship("Agent")
 
 
 class Doc(Base):

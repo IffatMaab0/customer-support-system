@@ -1,4 +1,3 @@
-
 import os
 from datetime import datetime, timedelta, timezone
 
@@ -9,7 +8,7 @@ from fastapi.security import HTTPBearer
 from sqlalchemy.orm import Session
 
 from database import get_db
-from models import Agent
+from models import Agent, Customer
 
 from pwdlib import PasswordHash
 
@@ -33,7 +32,7 @@ def verify_password(password: str, hashed_password: str) -> bool:
 
 
 def create_access_token(
-    agent_id: str,
+    user_id: str,
     role: str
 ) -> str:
 
@@ -43,7 +42,7 @@ def create_access_token(
     )
 
     payload = {
-        "sub": agent_id,
+        "sub": user_id,
         "role": role,
         "exp": expiration
     }
@@ -55,7 +54,7 @@ def create_access_token(
     )
 
 
-def get_current_agent(
+def get_current_identity(
     credentials=Depends(oauth2_scheme),
     db: Session = Depends(get_db)
 ):
@@ -68,9 +67,10 @@ def get_current_agent(
             algorithms=[JWT_ALGORITHM]
         )
 
-        agent_id = payload.get("sub")
+        user_id = payload.get("sub")
+        role = payload.get("role")
 
-        if not agent_id:
+        if not user_id or not role:
             raise HTTPException(
                 status_code=401,
                 detail="Invalid authentication token"
@@ -82,28 +82,63 @@ def get_current_agent(
             detail="Invalid authentication token"
         )
 
-    agent = (
-        db.query(Agent)
-        .filter(Agent.id == agent_id)
-        .first()
+    if role == "customer":
+
+        user = (
+            db.query(Customer)
+            .filter(Customer.id == user_id)
+            .first()
+        )
+
+        if not user or not user.is_active:
+            raise HTTPException(
+                status_code=401,
+                detail="Invalid authentication token"
+            )
+
+        return user
+
+    if role in ["agent", "manager", "admin"]:
+
+        user = (
+            db.query(Agent)
+            .filter(Agent.id == user_id)
+            .first()
+        )
+
+        if not user:
+            raise HTTPException(
+                status_code=401,
+                detail="Invalid authentication token"
+            )
+
+        return user
+
+    raise HTTPException(
+        status_code=401,
+        detail="Invalid authentication token"
     )
 
-    if not agent:
-        raise HTTPException(
-            status_code=401,
-            detail="Agent not found"
-        )
 
-    return agent
-
-
-def get_current_admin(
-    current_agent: Agent = Depends(get_current_agent)
+def get_current_staff(
+    current_user=Depends(get_current_identity)
 ):
-    if current_agent.role != "admin":
+    if not isinstance(current_user, Agent):
         raise HTTPException(
             status_code=403,
-            detail="Admin access required"
+            detail="Staff access required"
         )
 
-    return current_agent
+    return current_user
+
+
+def get_current_manager(
+    current_user: Agent = Depends(get_current_staff)
+):
+    if current_user.role not in ["admin", "manager"]:
+        raise HTTPException(
+            status_code=403,
+            detail="Manager access required"
+        )
+
+    return current_user
